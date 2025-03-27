@@ -1,0 +1,8 @@
+# Direct compilation
+g++ -o thread_process_app_cpp main.cpp -lpthread -Wall -Wextra -std=c++17
+
+# CMake compilation
+mkdir build
+cd build
+cmake ..
+make
