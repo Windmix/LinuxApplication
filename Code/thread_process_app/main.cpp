@@ -9,18 +9,38 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <mutex>
+
+class MathCalculator {
+public:
+    static double calculateNestedSum()
+    {
+        double total = 0.0;
+        for (int i = 1; i <= 5000; ++i)
+        {
+            for (int j = 1; j <= i; ++j)
+            {
+                total += sqrt(i * j);
+            }
+        }
+        return total;
+    }
+};
 
 class SystemInfo {
 public:
-    static void print() {
+    static void print()
+    {
         struct sysinfo sys_info;
         struct utsname uts;
 
-        if (sysinfo(&sys_info) != 0) {
+        if (sysinfo(&sys_info) != 0)
+        {
             throw std::runtime_error("Failed to get system info");
         }
 
-        if (uname(&uts) != 0) {
+        if (uname(&uts) != 0)
+        {
             throw std::runtime_error("Failed to get uname info");
         }
 
@@ -33,113 +53,112 @@ public:
 
 class ProcessManager {
 public:
-    static void forkProcesses(int count) {
-        std::vector<pid_t> pids;
-        int sum = 0;
+    static void forkProcesses(int count)
+    {
+        long pid_sum = 0;
+        std::vector<pid_t> children;
 
-        for (int i = 0; i < count; ++i) {
+        for (int i = 0; i < count; ++i) 
+        {
             pid_t pid = fork();
-            if (pid < 0) {
-                throw std::runtime_error("Fork failed");
+            if (pid == 0) { // Child process
+                std::cout << "Child PID: " << getpid()
+                    << " | Math sum: " << MathUtil::calculate_nested_sqrt_sum()
+                    << std::endl;
+                exit(getpid()); // Return actual PID
             }
-            else if (pid == 0) {
-                // Child process
-                std::cout << "Child PID: " << getpid() << std::endl;
-                exit(getpid() % 1000);  // Return PID modulo 1000
-            }
-            else {
-                pids.push_back(pid);
-            }
+            children.push_back(pid);
         }
 
-        // Parent process
-        for (pid_t pid : pids) {
+        // Parent sums PIDs
+        for (pid_t child : children) 
+        {
             int status;
-            waitpid(pid, &status, 0);
+            waitpid(child, &status, 0);
             if (WIFEXITED(status)) {
-                sum += WEXITSTATUS(status);
+                pid_sum += WEXITSTATUS(status);
             }
         }
-
-        std::cout << "Sum of PIDs (mod 1000): " << sum << std::endl;
+        std::cout << "Total PID sum: " << pid_sum << std::endl;
     }
 };
 
 class ThreadManager {
 public:
-    static void createThreads(int count) {
+    static void createThreads(int count)
+    {
+        unsigned long tid_sum = 0;
+        double math_sum_total = 0.0;
+        std::mutex mtx;
         std::vector<std::thread> threads;
-        int sum = 0;
-        std::mutex sum_mutex;
+
+        auto thread_task = [&]() {
+            // Calculate math sum
+            double math_result = MathUtil::calculate_nested_sqrt_sum();
+
+            // Get thread ID as number
+            auto tid = std::hash<std::thread::id>{}(std::this_thread::get_id());
+
+            {
+                std::lock_guard<std::mutex> lock(mtx);
+                tid_sum += tid;
+                math_sum_total += math_result;
+            }
+
+            std::cout << "Thread ID: " << tid
+                << " | Math sum: " << math_result
+                << std::endl;
+            };
 
         for (int i = 0; i < count; ++i) {
-            threads.emplace_back([&sum, &sum_mutex]() {
-                std::thread::id id = std::this_thread::get_id();
-                std::cout << "Thread ID: " << id << std::endl;
-
-                std::lock_guard<std::mutex> lock(sum_mutex);
-                sum += hashThreadId(id);
-                });
+            threads.emplace_back(thread_task);
         }
 
-        for (auto& thread : threads) {
-            thread.join();
+        for (auto& t : threads) {
+            t.join();
         }
 
-        std::cout << "Sum of thread IDs (mod 1000): " << sum % 1000 << std::endl;
-    }
-
-private:
-    static int hashThreadId(const std::thread::id& id) {
-        std::hash<std::thread::id> hasher;
-        return static_cast<int>(hasher(id) % 1000);
+        std::cout << "Total Thread ID sum: " << tid_sum << std::endl;
+        std::cout << "Combined math sum: " << math_sum_total << std::endl;
     }
 };
 
 class ArgumentParser {
 public:
-    static void parse(int argc, char* argv[]) {
-        if (argc < 2) {
-            throw std::invalid_argument("Usage: " + std::string(argv[0]) + " [-i] [-f X] [-t X]");
+    static void parse(int argc, char* argv[])
+    {
+        if (argc < 2)
+        {
+            throw std::runtime_error("Usage: ./app [-i] [-f X] [-t X]");
         }
 
-        for (int i = 1; i < argc; ++i) {
+        for (int i = 1; i < argc; ++i)
+        {
             std::string arg = argv[i];
 
-            if (arg == "-i") {
+            if (arg == "-i") 
+            {
                 SystemInfo::print();
             }
-            else if (arg == "-f" && i + 1 < argc) {
-                int count = parseCount(argv[++i]);
-                ProcessManager::forkProcesses(count);
-            }            else if (arg == "-t" && i + 1 < argc) {
-                int count = parseCount(argv[++i]);
-                ThreadManager::createThreads(count);
+            else if (arg == "-f" && i + 1 < argc)
+            {
+                ProcessManager::forkProcesses(std::stoi(argv[++i]));
             }
-            else {
-                throw std::invalid_argument("Unknown option: " + arg);
+            else if (arg == "-t" && i + 1 < argc)
+            {
+                ThreadManager::createThreads(std::stoi(argv[++i]));
             }
-        }
-    }
-
-private:
-    static int parseCount(const char* str) {
-        try {
-            int count = std::stoi(str);
-            if (count <= 0) throw std::invalid_argument("Count must be positive");
-            return count;
-        }
-        catch (const std::exception& e) {
-            throw std::invalid_argument("Invalid count: " + std::string(str));
         }
     }
 };
-
-int main(int argc, char* argv[]) {
-    try {
+int main(int argc, char* argv[])
+{
+    try 
+    {
         ArgumentParser::parse(argc, argv);
     }
-    catch (const std::exception& e) {
+    catch (const std::exception& e)
+    {
         std::cerr << "Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
