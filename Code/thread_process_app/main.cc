@@ -1,3 +1,10 @@
+/*
+//
+//Copyright (c) 2025 Windmix
+// License: bruh
+// Project: thread_process_app
+//*/
+
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -58,7 +65,7 @@ class ProcessManager {
 public:
     static void forkProcesses(int count)
     {
-        long pid_sum = 0;
+        uint64_t pid_sum = 0;
         std::vector<pid_t> children;
 
         auto start = std::chrono::high_resolution_clock::now();
@@ -87,7 +94,7 @@ public:
             }
         }
         auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> duration = end - start;
+        std::chrono::duration<float> duration = end - start;
         std::cout << "Total PID sum: " << pid_sum << std::endl <<"Time taken : " << duration.count() << " seconds" << std::endl;
     }
 };
@@ -109,11 +116,11 @@ public:
             // Get thread ID as number
             auto tid = std::hash<std::thread::id>{}(std::this_thread::get_id());
 
-            {
-                std::lock_guard<std::mutex> lock(mtx);
-                tid_sum += tid;
-                math_sum_total += math_result;
-            }
+            
+            std::lock_guard<std::mutex> lock(mtx);
+            tid_sum += tid;
+            math_sum_total += math_result;
+            
 
             std::cout << "Thread ID: " << tid
                 << " | Math sum: " << math_result
@@ -130,7 +137,7 @@ public:
             t.join();
         }
         auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> duration = end - start;
+        std::chrono::duration<float> duration = end - start;
 
         std::cout << "Total Thread ID sum: " << tid_sum << std::endl << "Time taken : " << duration.count() << " seconds" << std::endl;;
         std::cout << "Combined math sum: " << math_sum_total << std::endl;
@@ -167,6 +174,9 @@ public:
 };
 int main(int argc, char* argv[])
 {
+    float yes;
+    float ok;
+    float meme;
     try 
     {
         ArgumentParser::parse(argc, argv);

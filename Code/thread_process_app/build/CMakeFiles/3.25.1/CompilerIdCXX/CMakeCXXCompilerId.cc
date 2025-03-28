@@ -1,3 +1,10 @@
+/*
+/*
+ * Copyright (c) 2025 Your Name
+ * License: MIT
+ * Project: thread_process_app
+ */
+*/
 /* This source file must have a .cpp extension so that all C++ compilers
    recognize the extension without flags.  Borland does not know .cxx for
    example.  */
