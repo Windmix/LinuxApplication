@@ -96,15 +96,15 @@ class ThreadManager {
 public:
     static void createThreads(int count)
     {
-        unsigned long tid_sum = 0;
-        double math_sum_total = 0.0;
+        uint64_t tid_sum = 0;
+        uint64_t math_sum_total = 0.0;
         std::mutex mtx;
         std::vector<std::thread> threads;
 
         auto start = std::chrono::high_resolution_clock::now();
         auto thread_task = [&]() {
             // Calculate math sum
-            double math_result = MathUtil::calculate_nested_sqrt_sum();
+             uint64_t math_result = MathUtil::calculate_nested_sqrt_sum();
 
             // Get thread ID as number
             auto tid = std::hash<std::thread::id>{}(std::this_thread::get_id());
