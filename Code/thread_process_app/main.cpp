@@ -9,18 +9,21 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <cmath>
+#include <stdint.h>
 #include <mutex>
+#include <chrono>
 
-class MathCalculator {
+class MathUtil {
 public:
-    static double calculateNestedSum()
+    static uint64_t calculate_nested_sqrt_sum() 
     {
-        double total = 0.0;
-        for (int i = 1; i <= 5000; ++i)
+        uint64_t total = 0.0;
+        for (int i = 1; i <= 50000; ++i) // Outer loop: i goes from 1 to 5000
         {
-            for (int j = 1; j <= i; ++j)
+            for (int j = 1; j <= i; ++j) // Inner loop: j goes from 1 to i
             {
-                total += sqrt(i * j);
+                total += std::sqrt(i * j); 
             }
         }
         return total;
@@ -47,7 +50,7 @@ public:
         std::cout << "Number of processors: " << get_nprocs() << "\n";
         std::cout << "Hostname: " << uts.nodename << "\n";
         std::cout << "Hardware platform: " << uts.machine << "\n";
-        std::cout << "Total memory: " << sys_info.totalram / (1024 * 1024) << " MB\n";
+        std::cout << "Total virtual memory: " << sys_info.totalram / (1024 * 1024) << " MB\n";
     }
 };
 
@@ -58,11 +61,14 @@ public:
         long pid_sum = 0;
         std::vector<pid_t> children;
 
+        auto start = std::chrono::high_resolution_clock::now();
+
         for (int i = 0; i < count; ++i) 
         {
             pid_t pid = fork();
-            if (pid == 0) { // Child process
-                std::cout << "Child PID: " << getpid()
+            if (pid == 0) 
+            { // Child process
+                std::cout << "Child "<< pid <<" PID: " << getpid()
                     << " | Math sum: " << MathUtil::calculate_nested_sqrt_sum()
                     << std::endl;
                 exit(getpid()); // Return actual PID
@@ -75,11 +81,14 @@ public:
         {
             int status;
             waitpid(child, &status, 0);
-            if (WIFEXITED(status)) {
+            if (WIFEXITED(status))
+            {
                 pid_sum += WEXITSTATUS(status);
             }
         }
-        std::cout << "Total PID sum: " << pid_sum << std::endl;
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = end - start;
+        std::cout << "Total PID sum: " << pid_sum << std::endl <<"Time taken : " << duration.count() << " seconds" << std::endl;
     }
 };
 
@@ -92,6 +101,7 @@ public:
         std::mutex mtx;
         std::vector<std::thread> threads;
 
+        auto start = std::chrono::high_resolution_clock::now();
         auto thread_task = [&]() {
             // Calculate math sum
             double math_result = MathUtil::calculate_nested_sqrt_sum();
@@ -110,15 +120,19 @@ public:
                 << std::endl;
             };
 
-        for (int i = 0; i < count; ++i) {
+        for (int i = 0; i < count; ++i)
+        {
             threads.emplace_back(thread_task);
         }
 
-        for (auto& t : threads) {
+        for (auto& t : threads)
+        {
             t.join();
         }
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = end - start;
 
-        std::cout << "Total Thread ID sum: " << tid_sum << std::endl;
+        std::cout << "Total Thread ID sum: " << tid_sum << std::endl << "Time taken : " << duration.count() << " seconds" << std::endl;;
         std::cout << "Combined math sum: " << math_sum_total << std::endl;
     }
 };
