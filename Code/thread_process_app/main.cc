@@ -94,7 +94,7 @@ public:
             }
         }
         auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<float> duration = end - start;
+        std::chrono::duration<double> duration = end - start;
         std::cout << "Total PID sum: " << pid_sum << std::endl <<"Time taken : " << duration.count() << " seconds" << std::endl;
     }
 };
@@ -137,7 +137,7 @@ public:
             t.join();
         }
         auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<float> duration = end - start;
+        std::chrono::duration<double> duration = end - start;
 
         std::cout << "Total Thread ID sum: " << tid_sum << std::endl << "Time taken : " << duration.count() << " seconds" << std::endl;;
         std::cout << "Combined math sum: " << math_sum_total << std::endl;
@@ -174,9 +174,9 @@ public:
 };
 int main(int argc, char* argv[])
 {
-    float yes;
-    float ok;
-    float meme;
+    double yes;
+    double ok;
+    double meme;
     try 
     {
         ArgumentParser::parse(argc, argv);
